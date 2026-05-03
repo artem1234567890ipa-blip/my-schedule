@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Расписание дня</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0a0a14;
+  color: #e0e0f0;
+  min-height: 100vh;
+}
+
+/* ── LOCK SCREEN ── */
+#lockScreen {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #12122a 0%, #0a0a14 70%);
+}
+.lock-card {
+  background: #0f0f1e;
+  border: 1px solid #1f1f38;
+  border-radius: 20px;
+  padding: 40px 36px;
+  width: 100%; max-width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.lock-icon {
+  font-size: 2.4rem;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 12px #7c3aed88);
+}
+.lock-title {
+  font-size: 1.2rem; font-weight: 800;
+  background: linear-gradient(90deg, #a78bfa, #60a5fa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+}
+.lock-sub { font-size: 0.8rem; color: #475569; margin-bottom: 28px; }
+.lock-input {
+  width: 100%;
+  background: #141428;
+  border: 1px solid #2a2a45;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #e0e0f0;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 14px;
+}
+.lock-input:focus { border-color: #7c3aed; }
+.lock-input.shake {
+  animation: shake 0.35s ease;
+  border-color: #dc2626;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
+}
+.lock-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(90deg, #7c3aed, #4338ca);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.lock-btn:hover { opacity: 0.9; }
+.lock-btn:active { transform: scale(0.98); }
+.lock-error {
+  font-size: 0.75rem; color: #f87171;
+  margin-top: 10px; min-height: 18px;
+}
+
+/* ── APP ── */
+#app {
+  display: none;
+  padding: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* STATUS BAR */
+.status-bar {
+  background: #0f0f1e;
+  border: 1px solid #1f1f38;
+  border-radius: 14px;
+  padding: 10px 18px;
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 18px; flex-wrap: wrap;
+}
+.s-clock {
+  font-size: 1.6rem; font-weight: 800; color: #60a5fa;
+  font-variant-numeric: tabular-nums;
+}
+.s-divider { width: 1px; height: 26px; background: #1f1f38; flex-shrink: 0; }
+.s-item { display: flex; flex-direction: column; gap: 1px; }
+.s-label { font-size: 0.58rem; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; }
+.s-value { font-size: 0.8rem; font-weight: 600; }
+.s-countdown { color: #a78bfa; }
+.s-completion { color: #4ade80; }
+.s-right { margin-left: auto; }
+
+/* Title */
+.day-name {
+  font-size: 1.6rem; font-weight: 800;
+  background: linear-gradient(90deg, #7c6af7, #60a5fa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 2px;
+}
+.day-date { font-size: 0.82rem; color: #64748b; margin-bottom: 4px; }
+
+/* School selector */
+.school-selector {
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 18px; flex-wrap: wrap;
+}
+.school-selector span { font-size: 0.78rem; color: #64748b; }
+.school-selector button {
+  padding: 5px 13px; border-radius: 7px;
+  border: 1px solid #2a2a45; background: #1a1a2e;
+  color: #94a3b8; font-size: 0.76rem; cursor: pointer; transition: all 0.2s;
+}
+.school-selector button.active {
+  background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; font-weight: 700;
+}
+
+/* Timeline */
+.timeline-wrap {
+  background: #0f0f1e;
+  border: 1px solid #1e1e38;
+  border-radius: 16px;
+  padding: 14px 14px 14px 0;
+  position: relative; overflow: hidden;
+}
+.timeline-inner { position: relative; min-height: 200px; }
+
+.tl-hour-line {
+  position: absolute; left: 48px; right: 0;
+  height: 1px; background: #181830;
+}
+.tl-hour-label {
+  position: absolute; left: 0; width: 44px;
+  font-size: 0.61rem; color: #2a3a4a;
+  text-align: right; padding-right: 8px;
+  transform: translateY(-50%);
+  font-variant-numeric: tabular-nums;
+}
+
+.tl-block {
+  position: absolute; left: 54px; right: 10px;
+  border-radius: 9px; padding: 6px 10px;
+  font-size: 0.77rem; overflow: hidden;
+  cursor: pointer; user-select: none;
+  transition: filter 0.15s, opacity 0.3s;
+  border-left: 3px solid transparent;
+  display: flex; align-items: flex-start; gap: 8px;
+  min-height: 24px;
+}
+.tl-block:hover { filter: brightness(1.2); }
+.tl-block:active { transform: scale(0.99); }
+.tl-block .tl-time { font-size: 0.63rem; opacity: 0.55; white-space: nowrap; padding-top: 2px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.tl-block .tl-label { font-weight: 600; line-height: 1.3; }
+.tl-block .tl-note  { font-size: 0.63rem; opacity: 0.5; margin-top: 1px; }
+
+/* States */
+@keyframes pulse-border {
+  0%,100% { box-shadow: 0 0 0 0 rgba(96,165,250,.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(96,165,250,0); }
+}
+.tl-block.current { border-left-color: #38bdf8 !important; animation: pulse-border 2.2s ease infinite; }
+.tl-block.done    { opacity: 0.6; border-left-color: #22c55e !important; }
+.tl-block.skip    { opacity: 0.4; border-left-color: #dc2626 !important; }
+.tl-block.skip .tl-label { text-decoration: line-through; }
+
+/* Status chip inside block */
+.tl-chip {
+  display: none; margin-left: auto; flex-shrink: 0;
+  font-size: 0.6rem; font-weight: 700;
+  padding: 1px 7px; border-radius: 20px; align-self: center;
+}
+.tl-block.done .tl-chip { display: block; background:#052e16; color:#4ade80; border:1px solid #16a34a; }
+.tl-block.skip .tl-chip { display: block; background:#2d0a0a; color:#f87171; border:1px solid #dc2626; }
+
+/* Now needle */
+.tl-now {
+  position: absolute; left: 48px; right: 0;
+  height: 2px; background: #f87171; pointer-events: none; z-index: 10;
+}
+.tl-now::before {
+  content:''; position: absolute; left:-5px; top:-4px;
+  width:10px; height:10px; background:#f87171; border-radius:50%;
+  box-shadow: 0 0 6px #f87171;
+}
+.tl-now-lbl {
+  position: absolute; left: 6px; top: -8px;
+  font-size: 0.62rem; color: #f87171; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+
+/* Hint */
+.hint { text-align: center; font-size: 0.7rem; color: #334155; margin-top: 12px; }
+
+/* Logout */
+.logout-btn {
+  background: none; border: 1px solid #1f1f38;
+  color: #475569; font-size: 0.72rem;
+  padding: 5px 12px; border-radius: 7px;
+  cursor: pointer; transition: all 0.2s;
+}
+.logout-btn:hover { border-color: #334155; color: #94a3b8; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(70px);
+  background: #1e1b4b; border: 1px solid #4338ca;
+  color: #c7d2fe; font-size: 0.78rem; font-weight: 600;
+  padding: 9px 20px; border-radius: 30px;
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none; z-index: 999; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 500px) {
+  #app { padding: 12px; }
+  .s-divider { display: none; }
+  .lock-card { margin: 16px; padding: 32px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Расписание дня</div>
+    <div class="lock-sub">Личная страница · введи пароль</div>
+    <input id="pwInput" class="lock-input" type="password"
+      placeholder="••••••••" maxlength="32"
+      onkeydown="if(event.key==='Enter')unlock()">
+    <button class="lock-btn" onclick="unlock()">Войти</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="s-clock" id="sClock">00:00</div>
+    <div class="s-divider"></div>
+    <div class="s-item">
+      <div class="s-label">Следующее</div>
+      <div class="s-value s-countdown" id="sCountdown">—</div>
+    </div>
+    <div class="s-divider"></div>
+    <div class="s-item">
+      <div class="s-label">Сегодня</div>
+      <div class="s-value s-completion" id="sCompletion">0 / 0</div>
+    </div>
+    <div class="s-right">
+      <button class="logout-btn" onclick="logout()">Выйти</button>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div class="day-name" id="dayName">—</div>
+  <div class="day-date" id="dayDate">—</div>
+
+  <!-- School selector -->
+  <div class="school-selector" style="margin-top:10px">
+    <span>Конец школы:</span>
+    <button id="btn-short" class="active" onclick="setSchool('short',this)">14:25</button>
+    <button id="btn-mid"              onclick="setSchool('mid',this)">15:25</button>
+    <button id="btn-long"             onclick="setSchool('long',this)">16:00</button>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-wrap">
+    <div class="timeline-inner" id="tlInner"></div>
+  </div>
+  <p class="hint">👆 Нажми на блок — отметить выполнено / пропустил</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── AUTH ────────────────────────────────────────────
+const PW_HASH = btoa('GAmemode457!'); // simple obfuscation
+
+function unlock() {
+  const val = document.getElementById('pwInput').value;
+  if (btoa(val) === PW_HASH) {
+    sessionStorage.setItem('auth', PW_HASH);
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  } else {
+    const inp = document.getElementById('pwInput');
+    const err = document.getElementById('lockError');
+    inp.classList.add('shake');
+    err.textContent = 'Неверный пароль';
+    setTimeout(() => { inp.classList.remove('shake'); err.textContent = ''; }, 1200);
+    inp.value = '';
+  }
+}
+function logout() {
+  sessionStorage.removeItem('auth');
+  location.reload();
+}
+// Auto-unlock if session active
+if (sessionStorage.getItem('auth') === PW_HASH) {
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// ─── SCHEDULE DATA ───────────────────────────────────
+const SCHOOL_ENDS = { short:'14:25', mid:'15:25', long:'16:00' };
+let currentMode = localStorage.getItem('schoolMode') || 'short';
+
+const SAT = [
+  { start:'08:00', end:'10:00', label:'Свободное утро',    type:'rest',   notif:false },
+  { start:'10:00', end:'12:00', label:'Онлайн-школа ЕГЭ', type:'ege',    notif:true  },
+  { start:'13:00', end:'14:30', label:'🏋️ Спорт В',        type:'sport',  notif:true, note:'Ноги · Пресс · Кардио' },
+  { start:'15:00', end:'21:00', label:'Отдых / хобби',     type:'free',   notif:false },
+  { start:'23:00', end:'08:00', label:'Сон',               type:'sleep',  notif:true  },
+];
+const SUN = [
+  { start:'08:00', end:'11:00', label:'Свободное утро',    type:'rest',   notif:false },
+  { start:'11:00', end:'13:00', label:'Повторение / ЕГЭ',  type:'ege',    notif:true  },
+  { start:'13:00', end:'21:00', label:'Полный отдых',      type:'free',   notif:false },
+  { start:'22:30', end:'07:30', label:'Сон',               type:'sleep',  notif:true  },
+];
+
+function buildSchedule(se) {
+  function add(base, mins) {
+    const [h,m] = base.split(':').map(Number);
+    const t = h*60+m+mins;
+    return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+  }
+  const r=add(se,60), a1=add(se,165), a1e=add(se,240);
+  const tr=add(se,45), ta=add(se,45), tae=add(se,120), ts=add(se,125), tse=add(se,215), te=add(se,245), tee=add(se,305);
+  const thr=add(se,45), ths=add(se,45), thse=add(se,135), the=add(se,155), thee=add(se,245);
+  const fr=add(se,95), fa=add(se,95), fae=add(se,170), fe=add(se,185), fee=add(se,245);
+  return {
+    1:[
+      {start:'08:30',end:se,   label:'Школа',              type:'school'},
+      {start:se,     end:r,    label:'Обед + отдых',        type:'rest'  },
+      {start:r,      end:add(r,95), label:'Онлайн-школа ЕГЭ', type:'ege'},
+      {start:a1,     end:a1e,  label:'Урок ИИ #1',          type:'ai'   },
+      {start:a1e,    end:'22:00', label:'Свободное время',  type:'free'  },
+      {start:'22:30',end:'07:30', label:'Сон',              type:'sleep' },
+    ],
+    2:[
+      {start:'08:30',end:se,   label:'Школа',              type:'school'},
+      {start:se,     end:tr,   label:'Обед + отдых',        type:'rest'  },
+      {start:ta,     end:tae,  label:'Урок ИИ #2',          type:'ai'   },
+      {start:ts,     end:tse,  label:'🏋️ Спорт А',          type:'sport', note:'Грудь · Плечи · Трицепс'},
+      {start:te,     end:tee,  label:'Онлайн-школа ЕГЭ',   type:'ege'  },
+      {start:'22:30',end:'07:30', label:'Сон',              type:'sleep' },
+    ],
+    3:[
+      {start:'08:30',end:se,   label:'Школа',              type:'school'},
+      {start:se,     end:r,    label:'Обед + отдых',        type:'rest'  },
+      {start:r,      end:add(r,95), label:'Онлайн-школа ЕГЭ', type:'ege'},
+      {start:a1,     end:a1e,  label:'Урок ИИ #3',          type:'ai'   },
+      {start:a1e,    end:'22:00', label:'Свободное время',  type:'free'  },
+      {start:'22:30',end:'07:30', label:'Сон',              type:'sleep' },
+    ],
+    4:[
+      {start:'08:30',end:se,   label:'Школа',              type:'school'},
+      {start:se,     end:thr,  label:'Обед + отдых',        type:'rest'  },
+      {start:ths,    end:thse, label:'🏋️ Спорт Б',          type:'sport', note:'Спина · Бицепс · Пресс'},
+      {start:the,    end:thee, label:'Онлайн-школа ЕГЭ',   type:'ege'  },
+      {start:thee,   end:'22:00', label:'Свободное время',  type:'free'  },
+      {start:'22:30',end:'07:30', label:'Сон',              type:'sleep' },
+    ],
+    5:[
+      {start:'08:30',end:se,   label:'Школа',              type:'school'},
+      {start:se,     end:fr,   label:'Длинный отдых',       type:'rest'  },
+      {start:fa,     end:fae,  label:'Урок ИИ #4',          type:'ai'   },
+      {start:fe,     end:fee,  label:'Онлайн-школа ЕГЭ',   type:'ege'  },
+      {start:fee,    end:'22:30', label:'Свободное время',  type:'free'  },
+      {start:'23:00',end:'08:00', label:'Сон',              type:'sleep' },
+    ],
+    6: SAT,
+    0: SUN,
+  };
+}
+
+let schedule = buildSchedule(SCHOOL_ENDS[currentMode]);
+
+// ─── COLORS ──────────────────────────────────────────
+const TYPE_COLOR = { school:'#3b82f6',ege:'#22d3ee',ai:'#7c3aed',rest:'#4ade80',sport:'#f87171',free:'#facc15',sleep:'#334155' };
+const TYPE_BG    = { school:'#0d2240',ege:'#0d2438',ai:'#1a1138',rest:'#0d2010',sport:'#201010',free:'#1a1a14',sleep:'#0d0d1e' };
+const DAY_RU     = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+
+// ─── HELPERS ─────────────────────────────────────────
+function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
+
+// ─── COMPLETION ──────────────────────────────────────
+function compKey(dow,idx) {
+  const d=new Date(), jan1=new Date(d.getFullYear(),0,1);
+  const week=Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7);
+  return `comp_${d.getFullYear()}_w${week}_d${dow}_i${idx}`;
+}
+function getComp(dow,idx)      { return localStorage.getItem(compKey(dow,idx))||''; }
+function setComp(dow,idx,state){ state?localStorage.setItem(compKey(dow,idx),state):localStorage.removeItem(compKey(dow,idx)); }
+
+const STATES=['','done','skip'];
+function toggleCompletion(dow,idx) {
+  const cur=getComp(dow,idx), next=STATES[(STATES.indexOf(cur)+1)%STATES.length];
+  setComp(dow,idx,next);
+  const el=document.querySelector(`.tl-block[data-idx="${idx}"]`);
+  if (el) {
+    el.classList.remove('done','skip');
+    if (next) el.classList.add(next);
+    const chip=el.querySelector('.tl-chip');
+    if (chip) chip.textContent=next==='done'?'✓ Готово':next==='skip'?'✗ Пропустил':'';
+  }
+  updateStats();
+  const msgs={done:'✓ Выполнено',skip:'✗ Пропустил','':"↩ Снято"};
+  showToast(msgs[next]);
+}
+
+// ─── RENDER TIMELINE ─────────────────────────────────
+function renderTimeline() {
+  const now=new Date(), dow=now.getDay();
+  const blocks=schedule[dow]||[];
+  const container=document.getElementById('tlInner');
+  container.innerHTML='';
+
+  document.getElementById('dayName').textContent  = DAY_RU[dow];
+  document.getElementById('dayDate').textContent  = now.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+
+  if (!blocks.length) { container.innerHTML='<div style="padding:40px;text-align:center;color:#334155">Нет данных</div>'; return; }
+
+  let minM=Infinity, maxM=-Infinity;
+  blocks.forEach(b => {
+    const s=toMins(b.start), e=toMins(b.end);
+    if(s<minM) minM=s;
+    if(e>s&&e>maxM) maxM=e;
+  });
+  minM=Math.max(0,minM-20); maxM=Math.min(24*60,maxM+15);
+  const PX=2.4, H=(maxM-minM)*PX;
+  container.style.height=H+'px';
+
+  // hour lines
+  for(let h=Math.floor(minM/60); h<=Math.ceil(maxM/60); h++) {
+    const m=h*60; if(m<minM||m>maxM) continue;
+    const y=(m-minM)*PX;
+    const line=document.createElement('div'); line.className='tl-hour-line'; line.style.top=y+'px';
+    const lbl=document.createElement('div');  lbl.className='tl-hour-label'; lbl.style.top=y+'px';
+    lbl.textContent=String(h).padStart(2,'0')+':00';
+    container.appendChild(lbl); container.appendChild(line);
+  }
+
+  const curMins=now.getHours()*60+now.getMinutes();
+  blocks.forEach((b,idx) => {
+    const s=toMins(b.start); let e=toMins(b.end);
+    if(e<=s) e=maxM;
+    if(s>maxM||e<minM) return;
+    const top=(Math.max(s,minM)-minM)*PX;
+    const height=Math.max((Math.min(e,maxM)-Math.max(s,minM))*PX,24);
+    const state=getComp(dow,idx);
+    const isCurrent=curMins>=s&&curMins<e;
+    const color=TYPE_COLOR[b.type]||'#64748b', bg=TYPE_BG[b.type]||'#1a1a2e';
+
+    const el=document.createElement('div');
+    el.className='tl-block'+(isCurrent?' current':'')+(state?' '+state:'');
+    el.style.cssText=`top:${top}px;height:${height}px;background:${bg};border-left-color:${color};`;
+    el.dataset.idx=idx;
+    el.onclick=()=>toggleCompletion(dow,idx);
+
+    const chipTxt=state==='done'?'✓ Готово':state==='skip'?'✗ Пропустил':'';
+    el.innerHTML=`
+      ${height>=30?`<div class="tl-time">${b.start}</div>`:''}
+      <div style="flex:1;min-width:0">
+        <div class="tl-label">${b.label}</div>
+        ${height>=46&&b.note?`<div class="tl-note">${b.note}</div>`:''}
+      </div>
+      <div class="tl-chip">${chipTxt}</div>`;
+    container.appendChild(el);
+  });
+
+  // needle
+  if(curMins>=minM&&curMins<=maxM) {
+    const y=(curMins-minM)*PX;
+    const needle=document.createElement('div'); needle.className='tl-now'; needle.id='tlNow'; needle.style.top=y+'px';
+    const lbl=document.createElement('div');   lbl.className='tl-now-lbl'; lbl.id='tlNowLbl';
+    lbl.textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    needle.appendChild(lbl); container.appendChild(needle);
+  }
+
+  updateStats();
+}
+
+// ─── CLOCK + NEEDLE ──────────────────────────────────
+function updateClock() {
+  const now=new Date();
+  document.getElementById('sClock').textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  // move needle
+  const needle=document.getElementById('tlNow'), lbl=document.getElementById('tlNowLbl');
+  if(needle) {
+    const blocks=schedule[now.getDay()]||[];
+    if(blocks.length){
+      let minM=Infinity;
+      blocks.forEach(b=>{const s=toMins(b.start);if(s<minM)minM=s;});
+      minM=Math.max(0,minM-20);
+      const c=now.getHours()*60+now.getMinutes();
+      needle.style.top=((c-minM)*2.4)+'px';
+      if(lbl) lbl.textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    }
+  }
+  // countdown
+  const dow=now.getDay(), blocks2=schedule[dow]||[];
+  const cur=now.getHours()*60+now.getMinutes();
+  let next=null, minDiff=Infinity;
+  blocks2.forEach(b=>{
+    const s=toMins(b.start); let diff=s-cur; if(diff<0) diff+=24*60;
+    if(diff>0&&diff<minDiff){minDiff=diff;next=b;}
+  });
+  const cd=document.getElementById('sCountdown');
+  if(next){const h=Math.floor(minDiff/60),m=minDiff%60; cd.textContent=(h?h+'ч ':'')+m+'м → '+next.label;}
+  else cd.textContent='—';
+}
+
+function updateStats() {
+  const dow=new Date().getDay(), blocks=schedule[dow]||[];
+  const done=blocks.filter((_,i)=>getComp(dow,i)==='done').length;
+  document.getElementById('sCompletion').textContent=`${done} / ${blocks.length}`;
+}
+
+// ─── SCHOOL SELECTOR ────────────────────────────────
+function setSchool(mode,btn) {
+  currentMode=mode;
+  schedule=buildSchedule(SCHOOL_ENDS[mode]);
+  localStorage.setItem('schoolMode',mode);
+  document.querySelectorAll('.school-selector button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTimeline();
+}
+
+// ─── TOAST ───────────────────────────────────────────
+let toastT;
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ─── INIT ────────────────────────────────────────────
+function init() {
+  const saved=localStorage.getItem('schoolMode');
+  if(saved&&SCHOOL_ENDS[saved]){
+    currentMode=saved; schedule=buildSchedule(SCHOOL_ENDS[saved]);
+    document.querySelectorAll('.school-selector button').forEach(b=>b.classList.remove('active'));
+    const btn=document.getElementById('btn-'+saved); if(btn) btn.classList.add('active');
+  }
+  renderTimeline();
+  updateClock();
+  setInterval(updateClock, 30000);
+}
+
+// Auto-init if already authenticated
+if(sessionStorage.getItem('auth')===PW_HASH) init();
+</script>
+</body>
+</html>

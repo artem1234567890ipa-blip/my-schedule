@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мой недельный график</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0a0a14;
+  color: #e0e0f0;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* ── STATUS BAR ── */
+.status-bar {
+  background: #0f0f1e;
+  border: 1px solid #1f1f38;
+  border-radius: 16px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.s-clock {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #60a5fa;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  min-width: 70px;
+}
+.s-divider { width: 1px; height: 28px; background: #1f1f38; flex-shrink: 0; }
+.s-item { display: flex; flex-direction: column; gap: 2px; }
+.s-label { font-size: 0.6rem; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; }
+.s-value { font-size: 0.82rem; font-weight: 600; }
+.s-countdown { color: #a78bfa; }
+.s-completion { color: #4ade80; }
+.s-streak { color: #fb923c; }
+.s-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.notif-btn {
+  padding: 7px 14px;
+  border-radius: 9px;
+  border: 1px solid #2a2a45;
+  background: #1a1a2e;
+  color: #64748b;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 5px;
+}
+.notif-btn.on { border-color: #7c3aed; color: #c4b5fd; background: #1e1a38; }
+.notif-btn.denied { border-color: #dc2626; color: #f87171; }
+
+/* ── TITLE ── */
+h1 {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  background: linear-gradient(90deg, #7c6af7, #a78bfa, #60a5fa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.subtitle { text-align: center; font-size: 0.82rem; color: #666; margin-bottom: 18px; }
+
+/* ── SCHOOL SELECTOR ── */
+.school-selector {
+  display: flex; justify-content: center; align-items: center;
+  gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.school-selector span { font-size: 0.8rem; color: #64748b; }
+.school-selector button {
+  padding: 6px 14px; border-radius: 8px;
+  border: 1px solid #2a2a45; background: #1a1a2e;
+  color: #94a3b8; font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+}
+.school-selector button.active {
+  background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; font-weight: 700;
+}
+
+/* ── WEEK GRID ── */
+.week {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr) 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+/* ── DAY CARD ── */
+.day {
+  background: #12122a;
+  border-radius: 14px;
+  border: 1px solid #1e1e38;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.day.today {
+  border-color: #4338ca;
+  box-shadow: 0 0 0 1px rgba(67,56,202,0.4), 0 6px 28px rgba(67,56,202,0.15);
+}
+.day-header {
+  padding: 9px 12px;
+  font-weight: 700; font-size: 0.82rem;
+  letter-spacing: 0.06em; text-align: center;
+  background: #1a1a32; border-bottom: 1px solid #1e1e38;
+  color: #c4b5fd;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.day.today .day-header { background: #1e1b4b; color: #a5b4fc; }
+.day.weekend .day-header { color: #f472b6; background: #1e1428; }
+.today-badge {
+  font-size: 0.6rem; font-weight: 700;
+  background: #312e81; color: #a5b4fc;
+  padding: 1px 6px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.day-progress-bar {
+  height: 3px; background: #1a1a2e; position: relative; overflow: hidden;
+}
+.day-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #3b82f6);
+  transition: width 0.6s ease; width: 0%;
+}
+
+/* ── BLOCKS ── */
+.blocks { padding: 8px 7px; display: flex; flex-direction: column; gap: 6px; }
+.block {
+  border-radius: 9px; padding: 8px 10px;
+  font-size: 0.77rem; line-height: 1.4;
+  cursor: pointer; user-select: none;
+  transition: filter 0.15s, opacity 0.3s, border-left-color 0.3s;
+  position: relative; overflow: hidden;
+}
+.block:hover { filter: brightness(1.18); }
+.block:active { transform: scale(0.98); }
+.block .time {
+  font-size: 0.67rem; opacity: 0.65; margin-bottom: 2px;
+  font-weight: 600; letter-spacing: 0.03em;
+}
+.block .label { font-weight: 600; padding-right: 28px; }
+.block .note { font-size: 0.65rem; opacity: 0.55; margin-top: 2px; }
+
+/* Block types */
+.school  { background: #0d2240; border-left: 3px solid #3b82f6; }
+.ege     { background: #0d2438; border-left: 3px solid #22d3ee; }
+.ai      { background: #1a1138; border-left: 3px solid #7c3aed; }
+.rest    { background: #0d2010; border-left: 3px solid #4ade80; }
+.sport   { background: #201010; border-left: 3px solid #f87171; }
+.free    { background: #1a1a14; border-left: 3px solid #facc15; }
+.sleep   { background: #0d0d1e; border-left: 3px solid #334155; }
+
+/* ── CURRENT BLOCK (pulsing) ── */
+@keyframes pulse-border {
+  0%,100% { box-shadow: 0 0 0 0 rgba(96,165,250,0.4); }
+  50%      { box-shadow: 0 0 0 5px rgba(96,165,250,0); }
+}
+.block.current {
+  border-left-color: #38bdf8 !important;
+  animation: pulse-border 2.2s ease infinite;
+}
+.now-pill {
+  display: none;
+  position: absolute; top: 6px; right: 6px;
+  font-size: 0.6rem; font-weight: 700;
+  background: #0c2e4a; color: #38bdf8;
+  border: 1px solid #0ea5e9;
+  padding: 1px 7px; border-radius: 20px;
+}
+.block.current .now-pill { display: block; }
+
+/* ── COMPLETION STATES ── */
+.status-chip {
+  display: none;
+  position: absolute; top: 6px; right: 6px;
+  font-size: 0.62rem; font-weight: 700;
+  padding: 1px 7px; border-radius: 20px;
+}
+.block.done   .status-chip { display: block; background: #052e16; color: #4ade80; border: 1px solid #16a34a; }
+.block.skip   .status-chip { display: block; background: #2d0a0a; color: #f87171; border: 1px solid #dc2626; }
+.block.done   { opacity: 0.7; border-left-color: #22c55e !important; }
+.block.skip   { opacity: 0.45; border-left-color: #dc2626 !important; }
+.block.skip   .label { text-decoration: line-through; }
+/* hide now-pill when has status */
+.block.done .now-pill, .block.skip .now-pill { display: none; }
+
+/* ── DAY TIMELINE ── */
+.day-section-title {
+  text-align: center; font-size: 1.1rem; font-weight: 800;
+  margin: 0 0 4px;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.day-section-sub { text-align: center; font-size: 0.78rem; color: #64748b; margin-bottom: 14px; }
+
+.timeline-wrap {
+  background: #0f0f1e;
+  border: 1px solid #1e1e38;
+  border-radius: 16px;
+  padding: 16px 14px 16px 0;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.timeline-inner {
+  position: relative;
+  min-height: 200px;
+}
+/* hour grid lines */
+.tl-hour-line {
+  position: absolute; left: 48px; right: 0;
+  height: 1px; background: #1a1a2e;
+  display: flex; align-items: center;
+}
+.tl-hour-label {
+  position: absolute; left: 0; width: 44px;
+  font-size: 0.62rem; color: #334155;
+  text-align: right; padding-right: 8px;
+  transform: translateY(-50%);
+  font-variant-numeric: tabular-nums;
+}
+/* blocks */
+.tl-block {
+  position: absolute; left: 54px; right: 10px;
+  border-radius: 8px; padding: 5px 10px;
+  font-size: 0.75rem; overflow: hidden;
+  cursor: pointer; transition: filter 0.15s, opacity 0.3s;
+  border-left: 3px solid transparent;
+  display: flex; align-items: flex-start; gap: 6px;
+  min-height: 22px;
+}
+.tl-block:hover { filter: brightness(1.2); }
+.tl-block .tl-time { font-size: 0.62rem; opacity: 0.6; white-space: nowrap; padding-top: 1px; flex-shrink: 0; }
+.tl-block .tl-label { font-weight: 600; line-height: 1.3; }
+.tl-block .tl-note { font-size: 0.62rem; opacity: 0.55; }
+.tl-block.done   { opacity: 0.6; }
+.tl-block.skip   { opacity: 0.4; }
+.tl-block.skip .tl-label { text-decoration: line-through; }
+.tl-block.current { border-left-color: #38bdf8 !important; animation: pulse-border 2.2s ease infinite; }
+
+/* current time needle */
+.tl-now {
+  position: absolute; left: 48px; right: 0;
+  height: 2px; background: #f87171;
+  pointer-events: none; z-index: 10;
+}
+.tl-now::before {
+  content: '';
+  position: absolute; left: -5px; top: -4px;
+  width: 10px; height: 10px;
+  background: #f87171; border-radius: 50%;
+}
+.tl-now-label {
+  position: absolute; right: 6px; top: -8px;
+  font-size: 0.6rem; color: #f87171; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── LEGEND ── */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 32px; justify-content: center;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #94a3b8; }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.legend-hint { text-align: center; font-size: 0.72rem; color: #475569; margin-top: -20px; margin-bottom: 28px; }
+
+/* ── WORKOUT SECTION ── */
+.section-title {
+  text-align: center; font-size: 1.25rem; font-weight: 800;
+  margin: 0 0 5px;
+  background: linear-gradient(90deg, #f87171, #fb923c, #fbbf24);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.section-sub { text-align: center; font-size: 0.8rem; color: #64748b; margin-bottom: 18px; }
+
+.science-strip {
+  background: #12122a; border: 1px solid #1e1e38;
+  border-radius: 14px; padding: 14px 18px; margin-bottom: 18px;
+}
+.science-strip h3 { font-size: 0.85rem; font-weight: 700; color: #22d3ee; margin-bottom: 10px; }
+.facts { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.fact { background: #0d0d1e; border-radius: 10px; padding: 10px 12px; text-align: center; }
+.fact-val { font-size: 1.1rem; font-weight: 800; color: #60a5fa; margin-bottom: 2px; }
+.fact-desc { font-size: 0.65rem; color: #64748b; line-height: 1.3; }
+
+.workout-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+.wcard { background: #12122a; border-radius: 14px; border: 1px solid #1e1e38; overflow: hidden; }
+.wcard-head {
+  padding: 10px 14px; font-weight: 700; font-size: 0.82rem;
+  background: #1e1010; border-bottom: 1px solid #1e1e38; color: #fca5a5;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.day-tag {
+  font-size: 0.68rem; background: #2e1a1a;
+  border: 1px solid #f87171; border-radius: 6px;
+  padding: 1px 8px; color: #f87171;
+}
+.wcard-body { padding: 8px 12px; }
+.ex { padding: 7px 0; border-bottom: 1px solid #1a1a30; }
+.ex:last-child { border-bottom: none; }
+.ex-name { font-size: 0.78rem; font-weight: 600; color: #f1f5f9; }
+.ex-sets { font-size: 0.71rem; color: #f87171; font-weight: 600; margin: 2px 0; }
+.ex-tip { font-size: 0.65rem; color: #475569; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.info-card {
+  background: #12122a; border-radius: 14px;
+  border: 1px solid #1e1e38; padding: 14px;
+}
+.info-card h3 { font-size: 0.85rem; font-weight: 700; margin-bottom: 10px; color: #a78bfa; }
+.info-card ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.info-card li {
+  font-size: 0.75rem; color: #94a3b8;
+  padding-left: 14px; position: relative;
+}
+.info-card li::before { content: "→"; position: absolute; left: 0; color: #7c3aed; }
+
+.equip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.equip-card { background: #12122a; border-radius: 14px; border: 1px solid #1e1e38; padding: 14px; }
+.equip-card.have { border-color: #166534; }
+.equip-card.have .eq-title { color: #4ade80; }
+.equip-card.buy  { border-color: #92400e; }
+.equip-card.buy  .eq-title { color: #fbbf24; }
+.eq-title { font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; }
+.equip-card ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.equip-card li { font-size: 0.73rem; color: #94a3b8; padding-left: 14px; position: relative; }
+.equip-card.have li::before { content: "✓"; position: absolute; left: 0; color: #4ade80; }
+.equip-card.buy  li::before { content: "+"; position: absolute; left: 0; color: #fbbf24; }
+.eq-price { font-size: 0.65rem; color: #475569; margin-top: 1px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: #1e1b4b; border: 1px solid #4338ca;
+  color: #c7d2fe; font-size: 0.8rem; font-weight: 600;
+  padding: 10px 20px; border-radius: 30px;
+  transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none; z-index: 999; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) { .week { grid-template-columns: repeat(4,1fr); } }
+@media (max-width: 900px) {
+  .week { grid-template-columns: repeat(3,1fr); }
+  .workout-grid { grid-template-columns: 1fr; }
+  .facts { grid-template-columns: repeat(2,1fr); }
+  .info-grid, .equip-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .week { grid-template-columns: 1fr 1fr; }
+  body { padding: 12px; }
+  .s-divider { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="s-clock" id="sClock">00:00</div>
+  <div class="s-divider"></div>
+  <div class="s-item">
+    <div class="s-label">Следующее</div>
+    <div class="s-value s-countdown" id="sCountdown">—</div>
+  </div>
+  <div class="s-divider"></div>
+  <div class="s-item">
+    <div class="s-label">Сегодня</div>
+    <div class="s-value s-completion" id="sCompletion">0 / 0</div>
+  </div>
+  <div class="s-divider"></div>
+  <div class="s-item">
+    <div class="s-label">Стрик тренировок</div>
+    <div class="s-value s-streak" id="sStreak">0 нед.</div>
+  </div>
+  <div class="s-right">
+    <button class="notif-btn" id="notifBtn" onclick="toggleNotif()">🔔 Уведомления</button>
+  </div>
+</div>
+
+<!-- TITLE -->
+<h1>Мой недельный график</h1>
+<p class="subtitle">Школа · ЕГЭ-онлайн · Обучение ИИ · Спорт · Отдых</p>
+
+<!-- SCHOOL END SELECTOR -->
+<div class="school-selector">
+  <span>Конец школы:</span>
+  <button id="btn-short" class="active" onclick="setSchool('short',this)">14:25</button>
+  <button id="btn-mid"              onclick="setSchool('mid',this)">15:25</button>
+  <button id="btn-long"             onclick="setSchool('long',this)">16:00</button>
+</div>
+
+<!-- DAY TIMELINE -->
+<div class="day-section-title" id="dayTitle">Расписание дня</div>
+<p class="day-section-sub" id="daySubtitle">Сегодня</p>
+<div class="timeline-wrap">
+  <div class="timeline-inner" id="timelineInner"></div>
+</div>
+
+<!-- WEEK GRID (rendered by JS) -->
+<div class="week" id="weekGrid"></div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Школа</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div>ЕГЭ</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>ИИ</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div>Спорт</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>Отдых</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#facc15"></div>Свободное</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#334155"></div>Сон</div>
+</div>
+<p class="legend-hint">👆 Нажми на блок чтобы отметить выполнено / пропустил</p>
+
+<!-- ═══ WORKOUT SECTION ═══ -->
+<div class="section-title">План тренировок</div>
+<p class="section-sub">Турник + гантели 3 кг · 3 дня/нед · На массу · ~177 см · 70 кг</p>
+
+<div class="science-strip">
+  <h3>Наука (мета-анализы 2022–2025)</h3>
+  <div class="facts">
+    <div class="fact"><div class="fact-val">6–20</div><div class="fact-desc">повторений в подходе — все работают на рост</div></div>
+    <div class="fact"><div class="fact-val">10–20</div><div class="fact-desc">подходов на мышцу в неделю для гипертрофии</div></div>
+    <div class="fact"><div class="fact-val">3×/нед</div><div class="fact-desc">на каждую мышечную группу — оптимально</div></div>
+    <div class="fact"><div class="fact-val">60–90с</div><div class="fact-desc">отдых между подходами (не менее 60с)</div></div>
+  </div>
+</div>
+
+<div class="workout-grid">
+  <div class="wcard">
+    <div class="wcard-head">Тренировка А — Толчок<span class="day-tag">ВТ</span></div>
+    <div class="wcard-body">
+      <div class="ex"><div class="ex-name">Отжимания (стандарт)</div><div class="ex-sets">4 × 10–15 повт.</div><div class="ex-tip">Прогресс: ноги на стуле → с хлопком</div></div>
+      <div class="ex"><div class="ex-name">Отжимания узким хватом</div><div class="ex-sets">3 × 10–12 повт.</div><div class="ex-tip">Локти вдоль тела — акцент на трицепс</div></div>
+      <div class="ex"><div class="ex-name">Жим гантелей стоя</div><div class="ex-sets">3 × 15–20 повт.</div><div class="ex-tip">Медленно вниз (3 сек) — больше нагрузки</div></div>
+      <div class="ex"><div class="ex-name">Разводка гантелей лёжа</div><div class="ex-sets">3 × 15–20 повт.</div><div class="ex-tip">Растяжение в нижней точке ключевое</div></div>
+      <div class="ex"><div class="ex-name">Подъём в стороны</div><div class="ex-sets">3 × 15–20 повт.</div><div class="ex-tip">Контролируй опускание, не раскачивай</div></div>
+    </div>
+  </div>
+  <div class="wcard">
+    <div class="wcard-head">Тренировка Б — Тяга<span class="day-tag">ЧТ</span></div>
+    <div class="wcard-body">
+      <div class="ex"><div class="ex-name">Подтягивания (широкий)</div><div class="ex-sets">4 × макс.</div><div class="ex-tip">Не можешь 5 раз — начни австралийские</div></div>
+      <div class="ex"><div class="ex-name">Подтягивания (обратный хват)</div><div class="ex-sets">3 × макс.</div><div class="ex-tip">Обратный хват — больше на бицепс</div></div>
+      <div class="ex"><div class="ex-name">Тяга гантели в наклоне</div><div class="ex-sets">3 × 15–20 (каждая)</div><div class="ex-tip">Локоть вверх, не разворачивай плечи</div></div>
+      <div class="ex"><div class="ex-name">Сгибание рук (бицепс)</div><div class="ex-sets">3 × 15–20 повт.</div><div class="ex-tip">4 сек вниз, полная амплитуда</div></div>
+      <div class="ex"><div class="ex-name">Планка</div><div class="ex-sets">3 × 30–60 сек</div><div class="ex-tip">Тело прямое, не поднимай таз</div></div>
+    </div>
+  </div>
+  <div class="wcard">
+    <div class="wcard-head">Тренировка В — Ноги<span class="day-tag">СБ</span></div>
+    <div class="wcard-body">
+      <div class="ex"><div class="ex-name">Приседания с гантелями</div><div class="ex-sets">4 × 15–20 повт.</div><div class="ex-tip">Колени не выходят за носки, спина прямая</div></div>
+      <div class="ex"><div class="ex-name">Румынская тяга</div><div class="ex-sets">3 × 15–20 повт.</div><div class="ex-tip">Чувствуй растяжение задней поверхности</div></div>
+      <div class="ex"><div class="ex-name">Выпады с гантелями</div><div class="ex-sets">3 × 12 (каждая нога)</div><div class="ex-tip">Колено не касается пола резко</div></div>
+      <div class="ex"><div class="ex-name">Скручивания на пресс</div><div class="ex-sets">3 × 15–20 повт.</div><div class="ex-tip">Напрягай именно пресс, не тяни шею</div></div>
+      <div class="ex"><div class="ex-name">Подъём ног в висе</div><div class="ex-sets">3 × 10–15 повт.</div><div class="ex-tip">Медленно опускай — нижний пресс</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="info-grid">
+  <div class="info-card">
+    <h3>⬆ Прогрессивная нагрузка</h3>
+    <ul>
+      <li>Каждую неделю +1–2 повтора к каждому подходу</li>
+      <li>Достиг 20 повт. → усложни движение</li>
+      <li>Медленный темп (3–4 сек вниз) = нагрузка без веса</li>
+      <li>Веди дневник — без записей нет прогресса</li>
+      <li>3 недели без роста = пора менять упражнение</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3>🍽 Питание для роста</h3>
+    <ul>
+      <li>Белок: 1.6–2.2 г/кг = 112–154 г в день</li>
+      <li>Яйца, творог, курица, рыба, бобовые</li>
+      <li>Профицит +200–300 ккал/день для массы</li>
+      <li>Вода: 2–2.5 литра в день минимум</li>
+      <li>Сон 8–9 часов — основной фактор восстановления</li>
+    </ul>
+  </div>
+</div>
+
+<div style="margin-bottom:10px">
+  <div class="section-title" style="font-size:1rem;margin-bottom:14px">Инвентарь</div>
+</div>
+<div class="equip-grid">
+  <div class="equip-card have">
+    <div class="eq-title">✓ Уже есть</div>
+    <ul>
+      <li>Турник — базовый инструмент для спины и бицепса</li>
+      <li>Гантели 3 кг — изоляция + высокие повторения</li>
+    </ul>
+  </div>
+  <div class="equip-card buy">
+    <div class="eq-title">+ Стоит докупить</div>
+    <ul>
+      <li><strong>Разборные гантели 10–20 кг</strong><div class="eq-price">~2000–4000 ₽ · Приоритет #1 — без прогрессии веса рост остановится</div></li>
+      <li><strong>Напольные брусья</strong><div class="eq-price">~1500–3000 ₽ · Приоритет #2 — дают огромный прирост для груди/трицепса</div></li>
+      <li><strong>Коврик для пола</strong><div class="eq-price">~500 ₽ · Приоритет #3 · для отжиманий, растяжки, пресса</div></li>
+      <li><strong>Утяжелительный жилет</strong><div class="eq-price">~1500–3000 ₽ · Приоритет #4 · для прогрессии на турнике</div></li>
+    </ul>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  SCHEDULE DATA
+// ═══════════════════════════════════════════════════
+const SAT = [
+  { start:'08:00', end:'10:00', label:'Свободное утро',    type:'rest',   notif:false },
+  { start:'10:00', end:'12:00', label:'Онлайн-школа ЕГЭ', type:'ege',    notif:true  },
+  { start:'13:00', end:'14:30', label:'🏋️ Спорт В',        type:'sport',  notif:true, note:'Ноги · Пресс · Кардио' },
+  { start:'15:00', end:'21:00', label:'Отдых / хобби',     type:'free',   notif:false },
+  { start:'23:00', end:'08:00', label:'Сон',               type:'sleep',  notif:true  },
+];
+const SUN = [
+  { start:'08:00', end:'11:00', label:'Свободное утро',    type:'rest',   notif:false },
+  { start:'11:00', end:'13:00', label:'Повторение / ЕГЭ',  type:'ege',    notif:true  },
+  { start:'13:00', end:'21:00', label:'Полный отдых',       type:'free',   notif:false },
+  { start:'22:30', end:'07:30', label:'Сон',               type:'sleep',  notif:true  },
+];
+
+function buildSchedule(se) {
+  // se = school end e.g. '15:25'
+  function add(base, mins) {
+    const [h,m] = base.split(':').map(Number);
+    const t = h*60 + m + mins;
+    return String(Math.floor(t/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0');
+  }
+  const r  = add(se, 60);   // rest end
+  const e  = add(se, 60);   // ege start (Mon/Wed: after 60min rest)
+  const a1 = add(se, 165);  // AI start Mon/Wed
+  const a1e= add(se, 240);  // AI end Mon/Wed
+
+  // Tue: rest 45min, AI, Sport, EGE
+  const tr  = add(se, 45);  // tue rest end
+  const ta  = add(se, 45);  // tue ai start
+  const tae = add(se, 120); // tue ai end
+  const ts  = add(se, 125); // tue sport start
+  const tse = add(se, 215); // tue sport end
+  const te  = add(se, 245); // tue ege start
+  const tee = add(se, 305); // tue ege end
+
+  // Thu: rest 45min, Sport, EGE
+  const thr  = add(se, 45);
+  const ths  = add(se, 45);  // thu sport start
+  const thse = add(se, 135); // thu sport end
+  const the  = add(se, 155); // thu ege start
+  const thee = add(se, 245); // thu ege end
+
+  // Fri: long rest, AI, EGE
+  const fr  = add(se, 95);  // fri rest end
+  const fa  = add(se, 95);  // fri ai start
+  const fae = add(se, 170); // fri ai end
+  const fe  = add(se, 185); // fri ege start
+  const fee = add(se, 245); // fri ege end
+
+  return {
+    1: [ // Mon
+      { start:'08:30', end:se,  label:'Школа',               type:'school', notif:true  },
+      { start:se,      end:r,   label:'Обед + отдых',         type:'rest',   notif:false },
+      { start:r,       end:add(r,95), label:'Онлайн-школа ЕГЭ', type:'ege', notif:true  },
+      { start:a1,      end:a1e, label:'Урок ИИ #1',           type:'ai',    notif:true  },
+      { start:a1e,     end:'22:00', label:'Свободное время',  type:'free',   notif:false },
+      { start:'22:30', end:'07:30', label:'Сон',              type:'sleep',  notif:true  },
+    ],
+    2: [ // Tue
+      { start:'08:30', end:se,  label:'Школа',                type:'school', notif:true  },
+      { start:se,      end:tr,  label:'Обед + отдых',          type:'rest',   notif:false },
+      { start:ta,      end:tae, label:'Урок ИИ #2',            type:'ai',    notif:true  },
+      { start:ts,      end:tse, label:'🏋️ Спорт А',            type:'sport',  notif:true, note:'Грудь · Плечи · Трицепс' },
+      { start:te,      end:tee, label:'Онлайн-школа ЕГЭ',     type:'ege',    notif:true  },
+      { start:'22:30', end:'07:30', label:'Сон',               type:'sleep',  notif:true  },
+    ],
+    3: [ // Wed
+      { start:'08:30', end:se,  label:'Школа',                type:'school', notif:true  },
+      { start:se,      end:r,   label:'Обед + отдых',          type:'rest',   notif:false },
+      { start:r,       end:add(r,95), label:'Онлайн-школа ЕГЭ', type:'ege', notif:true  },
+      { start:a1,      end:a1e, label:'Урок ИИ #3',            type:'ai',    notif:true  },
+      { start:a1e,     end:'22:00', label:'Свободное время',   type:'free',   notif:false },
+      { start:'22:30', end:'07:30', label:'Сон',               type:'sleep',  notif:true  },
+    ],
+    4: [ // Thu
+      { start:'08:30', end:se,  label:'Школа',                type:'school', notif:true  },
+      { start:se,      end:thr, label:'Обед + отдых',          type:'rest',   notif:false },
+      { start:ths,     end:thse,label:'🏋️ Спорт Б',            type:'sport',  notif:true, note:'Спина · Бицепс · Пресс' },
+      { start:the,     end:thee,label:'Онлайн-школа ЕГЭ',     type:'ege',    notif:true  },
+      { start:thee,    end:'22:00', label:'Свободное время',   type:'free',   notif:false },
+      { start:'22:30', end:'07:30', label:'Сон',               type:'sleep',  notif:true  },
+    ],
+    5: [ // Fri
+      { start:'08:30', end:se,  label:'Школа',                type:'school', notif:true  },
+      { start:se,      end:fr,  label:'Длинный отдых',         type:'rest',   notif:false },
+      { start:fa,      end:fae, label:'Урок ИИ #4',            type:'ai',    notif:true  },
+      { start:fe,      end:fee, label:'Онлайн-школа ЕГЭ',     type:'ege',    notif:true  },
+      { start:fee,     end:'22:30', label:'Свободное время',   type:'free',   notif:false },
+      { start:'23:00', end:'08:00', label:'Сон',               type:'sleep',  notif:true  },
+    ],
+    6: SAT,
+    0: SUN,
+  };
+}
+
+const SCHOOL_ENDS = { short:'14:25', mid:'15:25', long:'16:00' };
+let currentMode = 'short';
+let schedule = buildSchedule(SCHOOL_ENDS.short);
+
+// ═══════════════════════════════════════════════════
+//  DAY TIMELINE
+// ═══════════════════════════════════════════════════
+const TYPE_COLORS = {
+  school:'#3b82f6', ege:'#22d3ee', ai:'#7c3aed',
+  rest:'#4ade80', sport:'#f87171', free:'#facc15', sleep:'#334155'
+};
+const TYPE_BG = {
+  school:'#0d2240', ege:'#0d2438', ai:'#1a1138',
+  rest:'#0d2010', sport:'#201010', free:'#1a1a14', sleep:'#0d0d1e'
+};
+const DAY_RU = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const DAY_RU_SHORT = ['вс','пн','вт','ср','чт','пт','сб'];
+
+function renderTimeline() {
+  const dow = new Date().getDay();
+  const blocks = schedule[dow] || [];
+  const container = document.getElementById('timelineInner');
+  container.innerHTML = '';
+
+  // Title
+  const now = new Date();
+  document.getElementById('dayTitle').textContent = DAY_RU[dow];
+  document.getElementById('daySubtitle').textContent =
+    now.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+
+  if (!blocks.length) {
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:#475569">Нет данных</div>';
+    return;
+  }
+
+  // Find visible time range: from first block start to last block end (skip overnight sleep end)
+  let minM = Infinity, maxM = -Infinity;
+  blocks.forEach(b => {
+    const s = timeToMins(b.start);
+    const e = timeToMins(b.end);
+    if (s < minM) minM = s;
+    // skip overnight (e < s means next day)
+    if (e > s && e > maxM) maxM = e;
+  });
+  // pad a bit
+  minM = Math.max(0, minM - 30);
+  maxM = Math.min(24*60, maxM + 20);
+  const totalMins = maxM - minM;
+  const PX_PER_MIN = 2.2;
+  const totalH = totalMins * PX_PER_MIN;
+  container.style.height = totalH + 'px';
+
+  // Draw hour lines
+  const startHour = Math.floor(minM / 60);
+  const endHour   = Math.ceil(maxM / 60);
+  for (let h = startHour; h <= endHour; h++) {
+    const m = h * 60;
+    if (m < minM || m > maxM) continue;
+    const y = (m - minM) * PX_PER_MIN;
+    const line = document.createElement('div');
+    line.className = 'tl-hour-line';
+    line.style.top = y + 'px';
+    const label = document.createElement('div');
+    label.className = 'tl-hour-label';
+    label.style.top = y + 'px';
+    label.textContent = String(h).padStart(2,'0') + ':00';
+    container.appendChild(label);
+    container.appendChild(line);
+  }
+
+  // Draw blocks
+  const curMins = now.getHours()*60 + now.getMinutes();
+  blocks.forEach((b, idx) => {
+    const s = timeToMins(b.start);
+    let e = timeToMins(b.end);
+    if (e <= s) e = maxM; // overnight — clip to end of view
+    if (s > maxM || e < minM) return;
+
+    const top  = (Math.max(s, minM) - minM) * PX_PER_MIN;
+    const height = Math.max((Math.min(e, maxM) - Math.max(s, minM)) * PX_PER_MIN, 22);
+    const state = getCompletion(dow, idx);
+    const isCurrent = curMins >= s && curMins < e;
+    const color = TYPE_COLORS[b.type] || '#64748b';
+    const bg    = TYPE_BG[b.type]    || '#1a1a2e';
+
+    const el = document.createElement('div');
+    el.className = 'tl-block' + (isCurrent?' current':'') + (state?' '+state:'');
+    el.style.cssText = `top:${top}px;height:${height}px;background:${bg};border-left-color:${color};`;
+    el.dataset.dow = dow; el.dataset.idx = idx;
+    el.onclick = () => toggleCompletion(dow, idx);
+
+    const showTime = height >= 28;
+    const showNote = height >= 44 && b.note;
+    el.innerHTML = `
+      ${showTime ? `<div class="tl-time">${b.start}</div>` : ''}
+      <div>
+        <div class="tl-label">${b.label}</div>
+        ${showNote ? `<div class="tl-note">${b.note}</div>` : ''}
+      </div>`;
+    container.appendChild(el);
+  });
+
+  // Current time needle
+  if (curMins >= minM && curMins <= maxM) {
+    const y = (curMins - minM) * PX_PER_MIN;
+    const needle = document.createElement('div');
+    needle.className = 'tl-now'; needle.id = 'tlNow';
+    needle.style.top = y + 'px';
+    const lbl = document.createElement('div');
+    lbl.className = 'tl-now-label'; lbl.id = 'tlNowLabel';
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    lbl.textContent = hh + ':' + mm;
+    needle.appendChild(lbl);
+    container.appendChild(needle);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════
+const DAY_ORDER = [1,2,3,4,5,6,0]; // Mon→Sun
+const DAY_NAMES = {1:'ПН',2:'ВТ',3:'СР',4:'ЧТ',5:'ПТ',6:'СБ',0:'ВС'};
+const WEEKEND = {6:true, 0:true};
+const today = new Date().getDay();
+
+function renderWeek() {
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = '';
+  DAY_ORDER.forEach(dow => {
+    const blocks = schedule[dow];
+    const isToday = dow === today;
+    const isWeekend = WEEKEND[dow];
+    const completions = getDayCompletions(dow);
+    const done = completions.filter(s => s==='done').length;
+    const total = blocks.length;
+    const pct = total ? Math.round(done/total*100) : 0;
+
+    const card = document.createElement('div');
+    card.className = 'day' + (isToday?' today':'') + (isWeekend?' weekend':'');
+    card.dataset.dow = dow;
+
+    let headerHtml = DAY_NAMES[dow];
+    if (isToday) headerHtml += '<span class="today-badge">Сегодня</span>';
+    card.innerHTML = `
+      <div class="day-header">${headerHtml}</div>
+      <div class="day-progress-bar"><div class="day-progress-fill" style="width:${pct}%"></div></div>
+      <div class="blocks" id="blocks-${dow}"></div>`;
+    grid.appendChild(card);
+
+    const blocksEl = card.querySelector('.blocks');
+    blocks.forEach((b, idx) => {
+      const state = getCompletion(dow, idx);
+      const bl = document.createElement('div');
+      bl.className = `block ${b.type}${state ? ' '+state : ''}`;
+      bl.dataset.dow = dow; bl.dataset.idx = idx;
+      bl.onclick = () => toggleCompletion(dow, idx);
+      const chipText = state==='done' ? '✓ Готово' : state==='skip' ? '✗ Пропустил' : '';
+      bl.innerHTML = `
+        <div class="time">${b.start} – ${b.end}</div>
+        <div class="label">${b.label}</div>
+        ${b.note ? `<div class="note">${b.note}</div>` : ''}
+        <div class="now-pill">● Сейчас</div>
+        <div class="status-chip">${chipText}</div>`;
+      blocksEl.appendChild(bl);
+    });
+  });
+  detectCurrentBlock();
+}
+
+// ═══════════════════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('sClock').textContent = h + ':' + m;
+}
+
+// ═══════════════════════════════════════════════════
+//  CURRENT BLOCK & COUNTDOWN
+// ═══════════════════════════════════════════════════
+function timeToMins(t) {
+  const [h,m] = t.split(':').map(Number);
+  return h*60 + m;
+}
+
+function detectCurrentBlock() {
+  const now = new Date();
+  const cur = now.getHours()*60 + now.getMinutes();
+  const dow = now.getDay();
+  document.querySelectorAll('.block.current').forEach(el => el.classList.remove('current'));
+
+  const dayBlocks = schedule[dow] || [];
+  dayBlocks.forEach((b, idx) => {
+    const s = timeToMins(b.start);
+    let e = timeToMins(b.end);
+    if (e < s) e += 24*60; // overnight (sleep)
+    let c = cur;
+    if (c < s && (e-s) > 12*60) c += 24*60; // handle overnight from prev day
+    if (c >= s && c < e) {
+      const el = document.querySelector(`.block[data-dow="${dow}"][data-idx="${idx}"]`);
+      if (el) el.classList.add('current');
+    }
+  });
+  updateCountdown(dow, cur);
+}
+
+function updateCountdown(dow, curMins) {
+  const dayBlocks = schedule[dow] || [];
+  let next = null; let minDiff = Infinity;
+  dayBlocks.forEach(b => {
+    const s = timeToMins(b.start);
+    let diff = s - curMins;
+    if (diff < 0) diff += 24*60;
+    if (diff > 0 && diff < minDiff) { minDiff = diff; next = b; }
+  });
+  const el = document.getElementById('sCountdown');
+  if (!next) { el.textContent = '—'; return; }
+  const h = Math.floor(minDiff/60); const m = minDiff%60;
+  el.textContent = (h ? h+'ч ' : '') + m + 'м → ' + next.label;
+}
+
+// ═══════════════════════════════════════════════════
+//  COMPLETION
+// ═══════════════════════════════════════════════════
+function compKey(dow, idx) {
+  const d = new Date();
+  // Week number (ISO-ish)
+  const jan1 = new Date(d.getFullYear(),0,1);
+  const week = Math.ceil(((d-jan1)/86400000 + jan1.getDay()+1)/7);
+  return `comp_${d.getFullYear()}_w${week}_d${dow}_i${idx}`;
+}
+function getCompletion(dow, idx) { return localStorage.getItem(compKey(dow,idx)) || ''; }
+function setCompletion(dow, idx, state) {
+  if (state) localStorage.setItem(compKey(dow,idx), state);
+  else localStorage.removeItem(compKey(dow,idx));
+}
+function getDayCompletions(dow) {
+  const blocks = schedule[dow] || [];
+  return blocks.map((_,i) => getCompletion(dow,i));
+}
+
+const STATES = ['', 'done', 'skip'];
+function toggleCompletion(dow, idx) {
+  const cur = getCompletion(dow,idx);
+  const next = STATES[(STATES.indexOf(cur)+1) % STATES.length];
+  setCompletion(dow, idx, next);
+
+  const el = document.querySelector(`.block[data-dow="${dow}"][data-idx="${idx}"]`);
+  if (el) {
+    el.classList.remove('done','skip');
+    if (next) el.classList.add(next);
+    const chip = el.querySelector('.status-chip');
+    if (chip) chip.textContent = next==='done'?'✓ Готово': next==='skip'?'✗ Пропустил':'';
+  }
+  // sync timeline block state
+  const tlEl = document.querySelector(`.tl-block[data-dow="${dow}"][data-idx="${idx}"]`);
+  if (tlEl) { tlEl.classList.remove('done','skip'); if (next) tlEl.classList.add(next); }
+  updateDayProgress(dow);
+  updateTodayStats();
+  checkWorkoutStreak();
+  const msgs = {done:'✓ Отмечено как выполнено', skip:'✗ Отмечено как пропущено', '':'↩ Отметка снята'};
+  showToast(msgs[next]);
+}
+
+function updateDayProgress(dow) {
+  const comps = getDayCompletions(dow);
+  const done = comps.filter(s=>s==='done').length;
+  const pct = comps.length ? Math.round(done/comps.length*100) : 0;
+  const bar = document.querySelector(`.day[data-dow="${dow}"] .day-progress-fill`);
+  if (bar) bar.style.width = pct + '%';
+}
+
+function updateTodayStats() {
+  const dow = new Date().getDay();
+  const comps = getDayCompletions(dow);
+  const done = comps.filter(s=>s==='done').length;
+  document.getElementById('sCompletion').textContent = `${done} / ${comps.length}`;
+}
+
+// ═══════════════════════════════════════════════════
+//  WORKOUT STREAK
+// ═══════════════════════════════════════════════════
+function getWorkoutKey(year, week, letter) {
+  return `workout_${year}_w${week}_${letter}`;
+}
+function checkWorkoutStreak() {
+  // Calculate how many consecutive weeks all 3 workouts (A=Tue, B=Thu, C=Sat) were done
+  const d = new Date();
+  const jan1 = new Date(d.getFullYear(),0,1);
+  let streak = 0;
+  for (let w = 1; w <= 52; w++) {
+    const week = Math.ceil(((d-jan1)/86400000 + jan1.getDay()+1)/7) - w + 1;
+    if (week < 1) break;
+    const a = localStorage.getItem(`workout_${d.getFullYear()}_w${week}_A`);
+    const b = localStorage.getItem(`workout_${d.getFullYear()}_w${week}_B`);
+    const c = localStorage.getItem(`workout_${d.getFullYear()}_w${week}_C`);
+    if (a==='done' && b==='done' && c==='done') streak++;
+    else break;
+  }
+  // Also check current week sport blocks completion
+  const jan1c = new Date(d.getFullYear(),0,1);
+  const curWeek = Math.ceil(((d-jan1c)/86400000 + jan1c.getDay()+1)/7);
+  const sportA = getCompletion(2, 3); // Tue sport block idx
+  const sportB = getCompletion(4, 2); // Thu sport block idx
+  const sportC = getCompletion(6, 2); // Sat sport block idx
+  if (sportA) localStorage.setItem(`workout_${d.getFullYear()}_w${curWeek}_A`, sportA);
+  if (sportB) localStorage.setItem(`workout_${d.getFullYear()}_w${curWeek}_B`, sportB);
+  if (sportC) localStorage.setItem(`workout_${d.getFullYear()}_w${curWeek}_C`, sportC);
+  document.getElementById('sStreak').textContent = streak + ' нед.';
+}
+
+// ═══════════════════════════════════════════════════
+//  NOTIFICATIONS
+// ═══════════════════════════════════════════════════
+const notifTimers = [];
+let notifsEnabled = false;
+
+function toggleNotif() {
+  if (Notification.permission === 'denied') {
+    showToast('🚫 Уведомления заблокированы в браузере');
+    return;
+  }
+  if (!notifsEnabled) {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') {
+        notifsEnabled = true;
+        scheduleNotifs();
+        updateNotifBtn();
+        showToast('🔔 Уведомления включены');
+      } else {
+        showToast('Разрешите уведомления в браузере');
+      }
+    });
+  } else {
+    notifsEnabled = false;
+    notifTimers.forEach(clearTimeout);
+    notifTimers.length = 0;
+    updateNotifBtn();
+    showToast('🔕 Уведомления выключены');
+  }
+}
+
+function updateNotifBtn() {
+  const btn = document.getElementById('notifBtn');
+  if (Notification.permission === 'denied') {
+    btn.className = 'notif-btn denied'; btn.textContent = '🚫 Заблокировано';
+  } else if (notifsEnabled) {
+    btn.className = 'notif-btn on'; btn.textContent = '🔔 Уведомления вкл.';
+  } else {
+    btn.className = 'notif-btn'; btn.textContent = '🔔 Уведомления';
+  }
+}
+
+const NOTIF_BODIES = {
+  school:'Пора собираться — школа начинается!',
+  ege:'Начинается онлайн-урок ЕГЭ',
+  ai:'Начинается урок по ИИ',
+  rest:'Время поесть и отдохнуть',
+  sport:'Пора тренироваться 💪',
+  free:'Твоё свободное время!',
+  sleep:'Пора ложиться спать. Завтра новый день 🌙',
+};
+
+function scheduleNotifs() {
+  notifTimers.forEach(clearTimeout); notifTimers.length = 0;
+  if (!notifsEnabled) return;
+  const dow = new Date().getDay();
+  const now = new Date();
+  const curMins = now.getHours()*60 + now.getMinutes();
+  const blocks = schedule[dow] || [];
+  blocks.forEach(b => {
+    if (!b.notif) return;
+    const sMins = timeToMins(b.start);
+    let diff = (sMins - curMins) * 60 * 1000;
+    // 5-min advance reminder
+    const diff5 = diff - 5*60*1000;
+    if (diff > 0) {
+      const t = setTimeout(() => {
+        new Notification('📅 ' + b.label, { body: NOTIF_BODIES[b.type] || '', icon: '' });
+      }, diff);
+      notifTimers.push(t);
+    }
+    if (diff5 > 0) {
+      const t5 = setTimeout(() => {
+        new Notification('⏰ Через 5 минут: ' + b.label, { body: 'Подготовься!' });
+      }, diff5);
+      notifTimers.push(t5);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  SCHOOL SELECTOR
+// ═══════════════════════════════════════════════════
+function setSchool(mode, btn) {
+  currentMode = mode;
+  schedule = buildSchedule(SCHOOL_ENDS[mode]);
+  document.querySelectorAll('.school-selector button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  localStorage.setItem('schoolMode', mode);
+  renderWeek();
+  renderTimeline();
+  if (notifsEnabled) scheduleNotifs();
+}
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Restore school mode
+  const saved = localStorage.getItem('schoolMode');
+  if (saved && SCHOOL_ENDS[saved]) {
+    currentMode = saved;
+    schedule = buildSchedule(SCHOOL_ENDS[saved]);
+    document.querySelectorAll('.school-selector button').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('btn-'+saved);
+    if (btn) btn.classList.add('active');
+  }
+
+  renderWeek();
+  renderTimeline();
+  updateClock();
+  updateTodayStats();
+  checkWorkoutStreak();
+
+  // Auto-restore notifications if previously granted
+  if (Notification.permission === 'granted') {
+    notifsEnabled = true;
+    scheduleNotifs();
+    updateNotifBtn();
+  }
+
+  setInterval(() => {
+    updateClock();
+    detectCurrentBlock();
+    // update needle position without full re-render
+    const now = new Date();
+    const needle = document.getElementById('tlNow');
+    const lbl = document.getElementById('tlNowLabel');
+    if (needle) {
+      const blocks = schedule[now.getDay()] || [];
+      if (blocks.length) {
+        let minM = Infinity;
+        blocks.forEach(b => { const s = timeToMins(b.start); if (s < minM) minM = s; });
+        minM = Math.max(0, minM - 30);
+        const curMins = now.getHours()*60 + now.getMinutes();
+        needle.style.top = ((curMins - minM) * 2.2) + 'px';
+        if (lbl) lbl.textContent = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      }
+    }
+  }, 30000);
+});
+</script>
+</body>
+</html>
