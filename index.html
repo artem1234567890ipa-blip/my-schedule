@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мой график</title>
+<meta name="theme-color" content="#0a0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Мой график">
+<link rel="manifest" href="manifest.json">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', sans-serif;
+  background: #0a0a14;
+  color: #e0e0f0;
+  display: flex; align-items: center; justify-content: center;
+}
+.wrap {
+  padding: 24px 20px;
+  width: 100%; max-width: 400px;
+  text-align: center;
+}
+.logo { font-size: 2.8rem; margin-bottom: 14px; }
+h1 {
+  font-size: 1.5rem; font-weight: 800; margin-bottom: 6px;
+  background: linear-gradient(90deg, #7c6af7, #a78bfa, #60a5fa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sub { font-size: 0.82rem; color: #475569; margin-bottom: 36px; }
+
+.cards { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  display: block;
+  background: #0f0f1e;
+  border: 1px solid #1f1f38;
+  border-radius: 16px;
+  padding: 20px 22px;
+  text-decoration: none;
+  text-align: left;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.card:hover {
+  border-color: #4338ca;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(67,56,202,0.2);
+}
+.card:active { transform: scale(0.98); }
+
+.card-icon { font-size: 1.8rem; margin-bottom: 10px; }
+.card-title { font-size: 1rem; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+.card-desc  { font-size: 0.78rem; color: #475569; line-height: 1.4; }
+.card-arrow {
+  float: right; margin-top: -32px;
+  font-size: 1.1rem; color: #334155;
+}
+
+.card.week  { border-color: #1e3a5f; }
+.card.week:hover  { border-color: #3b82f6; box-shadow: 0 8px 32px rgba(59,130,246,0.15); }
+.card.week .card-icon::after { content: ''; }
+
+.card.day   { border-color: #2a1f4e; }
+.card.day:hover   { border-color: #7c3aed; box-shadow: 0 8px 32px rgba(124,58,237,0.15); }
+
+.card.sport { border-color: #201010; }
+.card.sport:hover { border-color: #f87171; box-shadow: 0 8px 32px rgba(248,113,113,0.15); }
+
+.clock {
+  font-size: 2.4rem; font-weight: 800;
+  color: #60a5fa; font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+}
+.date-str { font-size: 0.78rem; color: #334155; margin-bottom: 32px; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.62rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+  background: #1e1b4b; color: #a5b4fc;
+  border: 1px solid #312e81;
+  margin-top: 6px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="clock" id="clock">00:00</div>
+  <div class="date-str" id="dateStr">—</div>
+
+  <div class="logo">📅</div>
+  <h1>Мой график</h1>
+  <p class="sub">Выбери что открыть</p>
+
+  <div class="cards">
+    <a class="card week" href="schedule.html">
+      <div class="card-icon">🗓</div>
+      <div class="card-title">Недельное расписание</div>
+      <div class="card-desc">Все 7 дней, уведомления, отметка выполнения, план тренировок</div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="card day" href="day.html">
+      <div class="card-icon">⏱</div>
+      <div class="card-title">Расписание дня</div>
+      <div class="card-desc">Таймлайн сегодня, стрелка текущего времени, отметка блоков</div>
+      <div class="badge">🔒 с паролем</div>
+      <div class="card-arrow">→</div>
+    </a>
+  </div>
+</div>
+
+<script>
+function update() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = h + ':' + m;
+  document.getElementById('dateStr').textContent =
+    now.toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long' });
+}
+update();
+setInterval(update, 10000);
+</script>
+</body>
+</html>
